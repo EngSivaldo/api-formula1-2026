@@ -1,6 +1,7 @@
 import express from "express";
 import { drivers } from "./data.js";
-import { randomUUID } from 'node:crypto';
+import { randomUUID } from "node:crypto";
+
 import { request } from 'node:http';
 
 
@@ -33,21 +34,69 @@ app.get(baseAPIRoute + '/drivers/:id', (request, response) => {
 })
 
 //registrar novo piloto(endpoint)
-app.post(baseAPIRoute + '/drivers' , (request, response) => {
-    const newDriver = {...request.body, id: randomUUID()};//criar novo obj com id gerado auto por random
+
+
+// registrar novo piloto
+app.post(baseAPIRoute + "/drivers", (request, response) => {
+
+  try {
+
+    const { name, team, points } = request.body;
+
+    // validação básica
+    if (!name || !team || points === undefined) {
+      return response.status(400).json({
+        error: "name, team e points são obrigatórios"
+      });
+    }
+
+    const newDriver = {
+      id: randomUUID(),
+      name,
+      team,
+      points: Number(points)
+    };
+
     drivers.push(newDriver);
-    drivers.sort((b, a) => {
-    if(a.points > b.points) {
-      return 1;
-    }
 
-    if (b.points > a.points) {
-      return -1;
-    }
+    // ordenar por pontos (maior primeiro)
+    drivers.sort((a, b) => b.points - a.points);
 
-    return 0;
-  })
-    response.status(200).send(newDriver);
+    return response.status(201).json(newDriver);
+
+  } catch (error) {
+
+    return response.status(500).json({
+      error: "Erro interno ao registrar piloto"
+    });
+
+  }
+
+});
+
+
+app.put(baseAPIRoute + "/drivers/:id", (request, response) => {
+
+  const { id } = request.params;
+  const { name, team, points } = request.body;
+
+  const driver = drivers.find(driver => driver.id === id);
+
+  if (!driver) {
+    return response.status(404).json({
+      error: "Driver não encontrado"
+    });
+  }
+
+  // atualizar dados
+  if (name) driver.name = name;
+  if (team) driver.team = team;
+  if (points !== undefined) driver.points = Number(points);
+
+  // ordenar novamente
+  drivers.sort((a, b) => b.points - a.points);
+
+  return response.status(200).json(driver);
 
 });
 
