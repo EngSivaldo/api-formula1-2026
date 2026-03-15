@@ -100,6 +100,25 @@ app.put(baseAPIRoute + "/drivers/:id", (request, response) => {
 
 });
 
+//deltar um piloto
+app.delete(baseAPIRoute + "/drivers/:id", (request, response) => {
+
+  const { id } = request.params;
+
+  const index = drivers.findIndex(driver => driver.id === id);
+
+  if (index === -1) {
+    return response.status(404).json({
+      error: "Driver não encontrado"
+    });
+  }
+
+  drivers.splice(index, 1);
+
+  return response.status(204).send();
+
+});
+
 
 const port = 3000;
 app.listen(port, () => console.log("API rodando com sucesso"));
